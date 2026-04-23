@@ -27,12 +27,14 @@ ML Framework and CUDA Checker (formerly known as TorchCUDA Check) is an advanced
 
 ## Requirements
 
-- Python 3.x
+- Python 3.10+
 - psutil
 - torch
 - Pillow
 - PySide6
-- unittest
+
+`unittest` is part of the Python standard library and does not need
+to be installed separately.
 
 ## Installation
 
