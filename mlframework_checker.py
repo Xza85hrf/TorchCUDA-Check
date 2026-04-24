@@ -590,19 +590,58 @@ def main():
     sys.exit(app.exec())
 
 
+def _run_cli() -> None:
+    """Run the same checks as the GUI but print to stdout.
+
+    The GUI's check_* methods update Qt widgets and pop up QMessageBox
+    install prompts, neither of which works without a running event
+    loop. CLI mode does the same detection inline and prints results.
+    """
+    import platform
+
+    print("ML Framework and CUDA Checker — CLI mode")
+    print("-" * 46)
+
+    # PyTorch
+    try:
+        import torch
+        line = f"PyTorch {torch.__version__}"
+        if torch.cuda.is_available():
+            line += f" | CUDA {torch.version.cuda} | {torch.cuda.device_count()} device(s)"
+            for i in range(torch.cuda.device_count()):
+                line += f"\n    [{i}] {torch.cuda.get_device_name(i)}"
+        else:
+            line += " | CUDA not available"
+        print(line)
+    except ImportError:
+        print("PyTorch: not installed")
+
+    # TensorFlow
+    try:
+        import tensorflow as tf  # noqa: F401
+        print(f"TensorFlow {tf.__version__}")
+    except ImportError:
+        print("TensorFlow: not installed")
+
+    # System specs
+    import psutil
+    ram_gb = round(psutil.virtual_memory().total / (1024 ** 3), 1)
+    print(f"System: {platform.system()} {platform.release()} "
+          f"({platform.machine()}), Python {platform.python_version()}")
+    print(f"CPU: {platform.processor() or 'unknown'}, "
+          f"cores={psutil.cpu_count(logical=False)}, "
+          f"threads={psutil.cpu_count(logical=True)}")
+    print(f"RAM: {ram_gb} GB")
+
+    print(f"Logs: {log_file}")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="ML Framework and CUDA Check")
-    parser.add_argument("--cli", action="store_true", help="Run in CLI mode")
+    parser.add_argument("--cli", action="store_true", help="Run in CLI mode (no GUI)")
     args = parser.parse_args()
 
     if args.cli:
-        print("Running in CLI mode")
-        checker = MLFrameworkChecker()
-        checker.check_pytorch()
-        checker.check_tensorflow()
-        checker.check_cuda()
-        checker.check_system_specs()
-        checker.check_system_compatibility()
-        print(f"Logs exported to {log_file}")
+        _run_cli()
     else:
         main()
